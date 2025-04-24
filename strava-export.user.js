@@ -51,23 +51,27 @@
             position: relative;
             width: 100%;
             height: 500px;
-            background-color: #1a1a1a;
+            background-color: #000000;
             margin-bottom: 20px;
             border-radius: 8px;
             overflow: hidden;
             color: #ffcc00;
+            padding: 20px;
+            box-sizing: border-box;
         }
         
         .color-picker-container {
             display: flex;
-            gap: 20px;
+            justify-content: space-between;
             margin-bottom: 20px;
+            width: 100%;
         }
         
         .color-picker-item {
             display: flex;
             flex-direction: column;
             align-items: center;
+            margin: 0 10px;
         }
         
         .export-actions {
@@ -209,7 +213,18 @@
             // 距离
             const distanceElement = inlineStats.querySelector('li:nth-child(1) strong');
             if (distanceElement) {
-                data.distance = distanceElement.textContent.trim();
+                // 只保留数字部分
+                let distance = distanceElement.textContent.trim();
+                if (distance) {
+                    // 提取数字部分
+                    const match = distance.match(/^([\d.]+)/);
+                    if (match) {
+                        data.distance = match[1];
+                    } else {
+                        data.distance = distance;
+                    }
+                }
+                
                 const unitElement = distanceElement.querySelector('abbr.unit');
                 if (unitElement) {
                     data.distanceUnit = unitElement.textContent.trim();
@@ -225,7 +240,18 @@
             // 海拔爬升
             const elevationElement = inlineStats.querySelector('li:nth-child(3) strong');
             if (elevationElement) {
-                data.elevation = elevationElement.textContent.trim();
+                // 只保留数字部分
+                let elevation = elevationElement.textContent.trim();
+                if (elevation) {
+                    // 提取数字部分
+                    const match = elevation.match(/^([\d.]+)/);
+                    if (match) {
+                        data.elevation = match[1];
+                    } else {
+                        data.elevation = elevation;
+                    }
+                }
+                
                 const unitElement = elevationElement.querySelector('abbr.unit');
                 if (unitElement) {
                     data.elevationUnit = unitElement.textContent.trim();
@@ -238,7 +264,18 @@
         if (secondaryStats) {
             const powerElement = secondaryStats.querySelector('li:first-child strong');
             if (powerElement) {
-                data.power = powerElement.textContent.trim();
+                // 只保留数字部分
+                let power = powerElement.textContent.trim();
+                if (power) {
+                    // 提取数字部分
+                    const match = power.match(/^([\d.]+)/);
+                    if (match) {
+                        data.power = match[1];
+                    } else {
+                        data.power = power;
+                    }
+                }
+                
                 const unitElement = powerElement.querySelector('abbr.unit');
                 if (unitElement) {
                     data.powerUnit = unitElement.textContent.trim();
@@ -253,24 +290,22 @@
             if (speedRow) {
                 const avgSpeedElement = speedRow.querySelector('td:first-child');
                 if (avgSpeedElement) {
-                    data.avgSpeed = avgSpeedElement.textContent.trim();
+                    // 只保留数字部分
+                    let avgSpeed = avgSpeedElement.textContent.trim();
+                    if (avgSpeed) {
+                        // 提取数字部分
+                        const match = avgSpeed.match(/^([\d.]+)/);
+                        if (match) {
+                            data.avgSpeed = match[1];
+                        } else {
+                            data.avgSpeed = avgSpeed;
+                        }
+                    }
+                    
                     const unitElement = avgSpeedElement.querySelector('abbr.unit');
                     if (unitElement) {
                         data.avgSpeedUnit = unitElement.textContent.trim();
                     }
-                }
-            }
-        }
-        
-        // 从心率数据获取平均心率
-        const heartRateRow = document.querySelector('.section.more-stats .show-more-block-js tr:first-child');
-        if (heartRateRow) {
-            const avgHrElement = heartRateRow.querySelector('td:first-child');
-            if (avgHrElement) {
-                data.avgHeartRate = avgHrElement.textContent.trim();
-                const unitElement = avgHrElement.querySelector('abbr.unit');
-                if (unitElement) {
-                    data.avgHeartRateUnit = unitElement.textContent.trim();
                 }
             }
         }
@@ -306,47 +341,11 @@
         date.textContent = data.date || '';
         preview.appendChild(date);
         
-        // 创建数据显示区域
-        const dataContainer = document.createElement('div');
-        dataContainer.style.display = 'flex';
-        dataContainer.style.justifyContent = 'space-around';
-        dataContainer.style.margin = '20px';
-        dataContainer.style.fontFamily = 'Arial, sans-serif';
-        
-        // 添加距离
-        dataContainer.appendChild(createDataItem('距离', data.distance || '0', data.distanceUnit || 'km'));
-        
-        // 添加移动时间
-        dataContainer.appendChild(createDataItem('总时长', data.movingTime || '0:00:00', ''));
-        
-        // 添加爬升
-        dataContainer.appendChild(createDataItem('累计爬升', data.elevation || '0', data.elevationUnit || 'm'));
-        
-        preview.appendChild(dataContainer);
-        
-        // 创建第二行数据显示
-        const dataContainer2 = document.createElement('div');
-        dataContainer2.style.display = 'flex';
-        dataContainer2.style.justifyContent = 'space-around';
-        dataContainer2.style.margin = '20px';
-        dataContainer2.style.fontFamily = 'Arial, sans-serif';
-        
-        // 添加平均速度
-        dataContainer2.appendChild(createDataItem('平均速度', data.avgSpeed || '0', data.avgSpeedUnit || 'km/h'));
-        
-        // 添加平均功率
-        dataContainer2.appendChild(createDataItem('平均功率', data.power || '0', data.powerUnit || 'W'));
-        
-        // 添加平均心率
-        dataContainer2.appendChild(createDataItem('平均心率', data.avgHeartRate || '0', data.avgHeartRateUnit || 'bpm'));
-        
-        preview.appendChild(dataContainer2);
-        
         // 添加路线图
         if (data.routePath) {
             const routeContainer = document.createElement('div');
-            routeContainer.style.margin = '20px';
-            routeContainer.style.height = '200px';
+            routeContainer.style.margin = '10px 0 20px 0';
+            routeContainer.style.height = '150px';
             routeContainer.style.position = 'relative';
             
             const svgElement = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -378,6 +377,60 @@
             preview.appendChild(routeContainer);
         }
         
+        // 添加距离（单独一行，字号更大）
+        const distanceContainer = document.createElement('div');
+        distanceContainer.style.textAlign = 'center';
+        distanceContainer.style.margin = '10px 0';
+        
+        const distanceValue = document.createElement('div');
+        distanceValue.style.fontSize = '48px';
+        distanceValue.style.fontWeight = 'bold';
+        distanceValue.style.display = 'flex';
+        distanceValue.style.alignItems = 'center';
+        distanceValue.style.justifyContent = 'center';
+        
+        const distanceNumber = document.createElement('span');
+        distanceNumber.textContent = data.distance || '0';
+        distanceValue.appendChild(distanceNumber);
+        
+        const distanceUnit = document.createElement('span');
+        distanceUnit.style.fontSize = '24px';
+        distanceUnit.style.marginLeft = '5px';
+        distanceUnit.textContent = data.distanceUnit || 'km';
+        distanceValue.appendChild(distanceUnit);
+        
+        const distanceLabel = document.createElement('div');
+        distanceLabel.style.fontSize = '16px';
+        distanceLabel.style.marginTop = '5px';
+        distanceLabel.textContent = '距离';
+        
+        distanceContainer.appendChild(distanceValue);
+        distanceContainer.appendChild(distanceLabel);
+        preview.appendChild(distanceContainer);
+        
+        // 创建2行2列数据显示区域
+        const dataGrid = document.createElement('div');
+        dataGrid.style.display = 'grid';
+        dataGrid.style.gridTemplateColumns = '1fr 1fr';
+        dataGrid.style.gridTemplateRows = '1fr 1fr';
+        dataGrid.style.gap = '15px';
+        dataGrid.style.margin = '20px 0';
+        dataGrid.style.fontFamily = 'Arial, sans-serif';
+        
+        // 添加移动时间
+        dataGrid.appendChild(createDataItem('总时长', data.movingTime || '0:00:00', ''));
+        
+        // 添加爬升
+        dataGrid.appendChild(createDataItem('累计爬升', data.elevation || '0', data.elevationUnit || 'm'));
+        
+        // 添加平均速度
+        dataGrid.appendChild(createDataItem('平均速度', data.avgSpeed || '0', data.avgSpeedUnit || 'km/h'));
+        
+        // 添加平均功率
+        dataGrid.appendChild(createDataItem('平均功率', data.power || '0', data.powerUnit || 'W'));
+        
+        preview.appendChild(dataGrid);
+        
         // 添加水印
         const watermark = document.createElement('div');
         watermark.style.position = 'absolute';
@@ -397,7 +450,13 @@
         const valueElement = document.createElement('div');
         valueElement.style.fontSize = '36px';
         valueElement.style.fontWeight = 'bold';
-        valueElement.textContent = value;
+        valueElement.style.display = 'flex';
+        valueElement.style.alignItems = 'center';
+        valueElement.style.justifyContent = 'center';
+        
+        const valueNumber = document.createElement('span');
+        valueNumber.textContent = value;
+        valueElement.appendChild(valueNumber);
         
         if (unit) {
             const unitSpan = document.createElement('span');
@@ -421,7 +480,6 @@
     // 更新预览
     function updatePreview() {
         const preview = document.querySelector('.strava-export-preview');
-        const activityData = extractActivityData();
         
         // 更新路线颜色
         const pathElement = preview.querySelector('svg path');
@@ -444,4 +502,4 @@
             link.click();
         });
     }
-})(); 
+})();
