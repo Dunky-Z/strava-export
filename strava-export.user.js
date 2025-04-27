@@ -37,53 +37,96 @@
             justify-content: center;
             align-items: center;
             z-index: 9999;
+            overflow: auto;
+            padding: 20px;
         }
         
         .strava-export-content {
             background-color: white;
             padding: 20px;
             border-radius: 8px;
-            width: 600px;
-            max-width: 90%;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+        }
+        
+        .strava-export-preview-container {
+            width: 100%;
+            padding-top: 133.33%; /* 3:4 比例 */
+            position: relative;
+            margin-bottom: 20px;
         }
         
         .strava-export-preview {
-            position: relative;
-            width: 100%;
-            aspect-ratio: 3/4;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
             background-color: #000000;
-            margin-bottom: 20px;
             border-radius: 8px;
             overflow: hidden;
             color: #ffcc00;
-            padding: 20px;
+            padding: 30px;
             box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
         }
         
-        .color-picker-container {
+        .strava-export-preview-scroll {
+            overflow-y: auto;
+            max-height: 70vh;
+        }
+        
+        .color-option-container {
             display: flex;
-            justify-content: space-between;
+            flex-direction: column;
             margin-bottom: 20px;
             width: 100%;
             box-sizing: border-box;
         }
         
-        .color-picker-item {
+        .color-group {
             display: flex;
-            flex-direction: column;
-            align-items: center;
-            flex: 1;
-            margin: 0 5px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
         }
         
-        .color-picker-item input {
+        .color-label {
+            font-weight: bold;
+            margin-bottom: 5px;
             width: 100%;
-            max-width: 100px;
+        }
+        
+        .color-option {
+            width: 30px;
+            height: 30px;
+            border-radius: 4px;
+            margin-right: 10px;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+        
+        .color-option.selected {
+            border-color: #333;
         }
         
         .export-actions {
             display: flex;
             justify-content: space-between;
+            position: sticky;
+            bottom: 0;
+            background-color: white;
+            padding-top: 10px;
+        }
+        
+        .esc-tip {
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+            margin-top: 10px;
         }
     `;
     document.head.appendChild(style);
@@ -101,45 +144,83 @@
         }
     });
 
+    // 颜色预设
+    const bgColorPresets = [
+        { value: '#000000', label: '黑色' },
+        { value: '#1D1D1D', label: '深灰' },
+        { value: '#212121', label: '深灰2' },
+        { value: '#333333', label: '灰色' }
+    ];
+    
+    const textColorPresets = [
+        { value: '#ffcc00', label: '金黄色' },
+        { value: '#FF5500', label: 'Strava橙' },
+        { value: '#FFFFFF', label: '白色' },
+        { value: '#33cc33', label: '绿色' }
+    ];
+    
+    const routeColorPresets = [
+        { value: '#ffcc00', label: '金黄色' },
+        { value: '#FF5500', label: 'Strava橙' },
+        { value: '#FFFFFF', label: '白色' },
+        { value: '#33cc33', label: '绿色' }
+    ];
+
+    // 当前颜色
+    let currentBgColor = '#000000';
+    let currentTextColor = '#ffcc00';
+    let currentRouteColor = '#ffcc00';
+    
+    // 当前打开的对话框引用
+    let currentDialog = null;
+
     // 显示导出对话框
     function showExportDialog() {
         // 创建对话框
         const dialog = document.createElement('div');
         dialog.className = 'strava-export-dialog';
         
+        // 保存对话框引用，以便在按ESC键时关闭
+        currentDialog = dialog;
+        
         // 对话框内容
         const content = document.createElement('div');
         content.className = 'strava-export-content';
         
+        // 预览容器（保持3:4比例）
+        const previewContainer = document.createElement('div');
+        previewContainer.className = 'strava-export-preview-container';
+        
         // 预览区域
         const preview = document.createElement('div');
         preview.className = 'strava-export-preview';
+        preview.style.backgroundColor = currentBgColor;
+        preview.style.color = currentTextColor;
+        
+        previewContainer.appendChild(preview);
         
         // 颜色选择区域
-        const colorPickerContainer = document.createElement('div');
-        colorPickerContainer.className = 'color-picker-container';
+        const colorContainer = document.createElement('div');
+        colorContainer.className = 'color-option-container';
         
         // 背景颜色选择
-        const bgColorPicker = createColorPicker('背景颜色', '#000000', function(color) {
+        colorContainer.appendChild(createColorGroup('背景颜色', bgColorPresets, currentBgColor, function(color) {
+            currentBgColor = color;
             preview.style.backgroundColor = color;
-            updatePreview();
-        });
+        }));
         
         // 文字颜色选择
-        const textColorPicker = createColorPicker('文字颜色', '#ffcc00', function(color) {
+        colorContainer.appendChild(createColorGroup('文字颜色', textColorPresets, currentTextColor, function(color) {
+            currentTextColor = color;
             preview.style.color = color;
             updatePreview();
-        });
+        }));
         
         // 路线颜色选择
-        const routeColorPicker = createColorPicker('路线颜色', '#ffcc00', function(color) {
+        colorContainer.appendChild(createColorGroup('路线颜色', routeColorPresets, currentRouteColor, function(color) {
             currentRouteColor = color;
             updatePreview();
-        });
-        
-        colorPickerContainer.appendChild(bgColorPicker);
-        colorPickerContainer.appendChild(textColorPicker);
-        colorPickerContainer.appendChild(routeColorPicker);
+        }));
         
         // 按钮区域
         const actions = document.createElement('div');
@@ -151,7 +232,7 @@
         cancelButton.style.backgroundColor = '#666';
         cancelButton.textContent = '取消';
         cancelButton.addEventListener('click', function() {
-            document.body.removeChild(dialog);
+            closeDialog();
         });
         
         // 导出按钮
@@ -159,16 +240,39 @@
         exportButton.className = 'strava-export-button';
         exportButton.textContent = '导出';
         exportButton.addEventListener('click', function() {
-            exportImage(preview);
+            const originalPreview = document.createElement('div');
+            originalPreview.className = 'strava-export-preview';
+            originalPreview.style.backgroundColor = currentBgColor;
+            originalPreview.style.color = currentTextColor;
+            originalPreview.style.position = 'fixed';
+            originalPreview.style.left = '-9999px';
+            originalPreview.style.top = '-9999px';
+            originalPreview.style.width = '600px'; // 固定宽度
+            originalPreview.style.height = '800px'; // 3:4 比例
+            document.body.appendChild(originalPreview);
+            
+            // 复制预览内容到导出用的元素
+            const activityData = extractActivityData();
+            generatePreview(originalPreview, activityData);
+            
+            exportImage(originalPreview, function() {
+                document.body.removeChild(originalPreview);
+            });
         });
         
         actions.appendChild(cancelButton);
         actions.appendChild(exportButton);
         
+        // ESC键提示
+        const escTip = document.createElement('div');
+        escTip.className = 'esc-tip';
+        escTip.textContent = '按ESC键可关闭此窗口';
+        
         // 组装对话框
-        content.appendChild(preview);
-        content.appendChild(colorPickerContainer);
+        content.appendChild(previewContainer);
+        content.appendChild(colorContainer);
         content.appendChild(actions);
+        content.appendChild(escTip);
         dialog.appendChild(content);
         
         document.body.appendChild(dialog);
@@ -176,28 +280,89 @@
         // 获取活动数据并生成预览
         const activityData = extractActivityData();
         generatePreview(preview, activityData);
+        
+        // 确保对话框在可视区域内
+        ensureDialogVisibility(dialog);
+        
+        // 添加ESC键关闭对话框的事件监听
+        document.addEventListener('keydown', handleEscKey);
+    }
+    
+    // 关闭对话框
+    function closeDialog() {
+        if (currentDialog) {
+            document.body.removeChild(currentDialog);
+            document.removeEventListener('keydown', handleEscKey);
+            currentDialog = null;
+        }
+    }
+    
+    // 处理ESC键按下事件
+    function handleEscKey(event) {
+        if (event.key === 'Escape' && currentDialog) {
+            closeDialog();
+        }
+    }
+    
+    // 确保对话框在可视区域内
+    function ensureDialogVisibility(dialog) {
+        setTimeout(() => {
+            const content = dialog.querySelector('.strava-export-content');
+            if (content.offsetHeight > window.innerHeight * 0.9) {
+                content.style.height = '90vh';
+            }
+        }, 100);
     }
 
-    // 当前路线颜色
-    let currentRouteColor = '#ffcc00';
-
-    // 创建颜色选择器
-    function createColorPicker(label, defaultColor, onChange) {
+    // 创建颜色选择组
+    function createColorGroup(label, presets, currentValue, onChange) {
         const container = document.createElement('div');
-        container.className = 'color-picker-item';
         
-        const labelElement = document.createElement('label');
+        const labelElement = document.createElement('div');
+        labelElement.className = 'color-label';
         labelElement.textContent = label;
+        container.appendChild(labelElement);
         
-        const input = document.createElement('input');
-        input.type = 'color';
-        input.value = defaultColor;
-        input.addEventListener('input', function() {
-            onChange(this.value);
+        const colorGroup = document.createElement('div');
+        colorGroup.className = 'color-group';
+        
+        presets.forEach(preset => {
+            const colorOption = document.createElement('div');
+            colorOption.className = 'color-option';
+            colorOption.style.backgroundColor = preset.value;
+            colorOption.title = preset.label;
+            if (preset.value === currentValue) {
+                colorOption.classList.add('selected');
+            }
+            
+            colorOption.addEventListener('click', function() {
+                // 移除之前的选中
+                colorGroup.querySelectorAll('.color-option').forEach(opt => {
+                    opt.classList.remove('selected');
+                });
+                // 添加新的选中
+                colorOption.classList.add('selected');
+                onChange(preset.value);
+            });
+            
+            colorGroup.appendChild(colorOption);
         });
         
-        container.appendChild(labelElement);
-        container.appendChild(input);
+        // 添加自定义颜色选项
+        const customColorInput = document.createElement('input');
+        customColorInput.type = 'color';
+        customColorInput.value = currentValue;
+        customColorInput.style.marginLeft = '10px';
+        customColorInput.addEventListener('input', function() {
+            onChange(this.value);
+            // 移除之前的选中
+            colorGroup.querySelectorAll('.color-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+        });
+        
+        colorGroup.appendChild(customColorInput);
+        container.appendChild(colorGroup);
         
         return container;
     }
@@ -290,31 +455,60 @@
             }
         }
         
-        // 从more-stats获取平均速度
-        const moreStats = document.querySelector('.section.more-stats');
-        if (moreStats) {
-            const speedRow = moreStats.querySelector('tbody tr:first-child');
-            if (speedRow) {
-                const avgSpeedElement = speedRow.querySelector('td:first-child');
-                if (avgSpeedElement) {
-                    // 只保留数字部分
-                    let avgSpeed = avgSpeedElement.textContent.trim();
-                    if (avgSpeed) {
-                        // 提取数字部分
-                        const match = avgSpeed.match(/^([\d.]+)/);
-                        if (match) {
-                            data.avgSpeed = match[1];
-                        } else {
-                            data.avgSpeed = avgSpeed;
-                        }
-                    }
-                    
-                    const unitElement = avgSpeedElement.querySelector('abbr.unit');
-                    if (unitElement) {
-                        data.avgSpeedUnit = unitElement.textContent.trim();
+        // 从more-stats获取平均速度（修复获取问题）
+        try {
+            // 尝试多种方法获取平均速度
+            let avgSpeed = '';
+            
+            // 方法1：查找更多统计中的表格
+            const moreStats = document.querySelector('.section.more-stats');
+            if (moreStats) {
+                const speedRow = moreStats.querySelector('tbody tr:first-child');
+                if (speedRow) {
+                    const avgSpeedElement = speedRow.querySelector('td:first-child');
+                    if (avgSpeedElement) {
+                        avgSpeed = avgSpeedElement.textContent.trim();
                     }
                 }
             }
+            
+            // 方法2：查找页面中显示的平均速度
+            if (!avgSpeed) {
+                const speedLabels = Array.from(document.querySelectorAll('th'));
+                const speedLabel = speedLabels.find(el => el.textContent.includes('速度'));
+                if (speedLabel && speedLabel.nextElementSibling) {
+                    avgSpeed = speedLabel.nextElementSibling.textContent.trim();
+                }
+            }
+            
+            // 方法3：查找页面中任何带有速度单位的元素
+            if (!avgSpeed) {
+                const speedElements = document.querySelectorAll('[title="千米/小时"]');
+                if (speedElements.length > 0) {
+                    const el = speedElements[0].parentElement;
+                    if (el) avgSpeed = el.textContent.trim();
+                }
+            }
+            
+            if (avgSpeed) {
+                // 提取数字部分
+                const match = avgSpeed.match(/^([\d.]+)/);
+                if (match) {
+                    data.avgSpeed = match[1];
+                } else {
+                    data.avgSpeed = '0';
+                }
+                
+                data.avgSpeedUnit = 'km/h';
+            } else {
+                console.log('无法获取平均速度');
+                data.avgSpeed = '0';
+                data.avgSpeedUnit = 'km/h';
+            }
+        } catch (error) {
+            console.error('获取平均速度时出错:', error);
+            data.avgSpeed = '0';
+            data.avgSpeedUnit = 'km/h';
         }
         
         // 获取路线数据
@@ -343,57 +537,30 @@
         // 添加活动日期
         const date = document.createElement('div');
         date.style.fontSize = '16px';
-        date.style.margin = '5px 0 20px 0';
+        date.style.margin = '5px 0 15px 0';
         date.style.fontFamily = 'Arial, sans-serif';
         date.textContent = data.date || '';
         preview.appendChild(date);
         
         // 创建路线图和距离显示的容器（并排布局）
-        const mainContainer = document.createElement('div');
-        mainContainer.style.display = 'flex';
-        mainContainer.style.justifyContent = 'space-between';
-        mainContainer.style.alignItems = 'center';
-        mainContainer.style.margin = '10px 0 20px 0';
+        const topSection = document.createElement('div');
+        topSection.style.display = 'flex';
+        topSection.style.flexDirection = 'column';
+        topSection.style.justifyContent = 'center';
+        topSection.style.flex = '1';
         
-        // 添加距离（放在左侧）
-        const distanceContainer = document.createElement('div');
-        distanceContainer.style.textAlign = 'left';
-        distanceContainer.style.flex = '1';
-        
-        const distanceValue = document.createElement('div');
-        distanceValue.style.fontSize = '48px';
-        distanceValue.style.fontWeight = 'bold';
-        distanceValue.style.display = 'flex';
-        distanceValue.style.alignItems = 'center';
-        
-        const distanceNumber = document.createElement('span');
-        distanceNumber.textContent = data.distance || '0';
-        distanceValue.appendChild(distanceNumber);
-        
-        const distanceUnit = document.createElement('span');
-        distanceUnit.style.fontSize = '24px';
-        distanceUnit.style.marginLeft = '5px';
-        distanceUnit.textContent = data.distanceUnit || 'km';
-        distanceValue.appendChild(distanceUnit);
-        
-        const distanceLabel = document.createElement('div');
-        distanceLabel.style.fontSize = '16px';
-        distanceLabel.style.marginTop = '5px';
-        distanceLabel.textContent = '距离';
-        
-        distanceContainer.appendChild(distanceValue);
-        distanceContainer.appendChild(distanceLabel);
-        mainContainer.appendChild(distanceContainer);
-        
-        // 添加路线图（放在右侧）
+        // 添加路线图（居中）
         if (data.routePath) {
             const routeContainer = document.createElement('div');
-            routeContainer.style.flex = '1';
-            routeContainer.style.height = '150px';
-            routeContainer.style.position = 'relative';
+            routeContainer.style.width = '100%';
+            routeContainer.style.height = '180px';
+            routeContainer.style.display = 'flex';
+            routeContainer.style.justifyContent = 'center';
+            routeContainer.style.alignItems = 'center';
+            routeContainer.style.margin = '0 0 20px 0';
             
             const svgElement = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-            svgElement.setAttribute('width', '100%');
+            svgElement.setAttribute('width', '80%');
             svgElement.setAttribute('height', '100%');
             svgElement.style.overflow = 'visible';
             
@@ -418,19 +585,52 @@
             }, 0);
             
             routeContainer.appendChild(svgElement);
-            mainContainer.appendChild(routeContainer);
+            topSection.appendChild(routeContainer);
         }
         
-        preview.appendChild(mainContainer);
+        // 添加距离（居中）
+        const distanceContainer = document.createElement('div');
+        distanceContainer.style.display = 'flex';
+        distanceContainer.style.flexDirection = 'column';
+        distanceContainer.style.alignItems = 'center';
+        distanceContainer.style.margin = '0 0 20px 0';
+        
+        const distanceValue = document.createElement('div');
+        distanceValue.style.fontSize = '60px';
+        distanceValue.style.fontWeight = 'bold';
+        distanceValue.style.display = 'flex';
+        distanceValue.style.alignItems = 'center';
+        
+        const distanceNumber = document.createElement('span');
+        distanceNumber.textContent = data.distance || '0';
+        distanceValue.appendChild(distanceNumber);
+        
+        const distanceUnit = document.createElement('span');
+        distanceUnit.style.fontSize = '30px';
+        distanceUnit.style.marginLeft = '5px';
+        distanceUnit.textContent = data.distanceUnit || 'km';
+        distanceValue.appendChild(distanceUnit);
+        
+        const distanceLabel = document.createElement('div');
+        distanceLabel.style.fontSize = '16px';
+        distanceLabel.style.marginTop = '5px';
+        distanceLabel.textContent = '距离';
+        
+        distanceContainer.appendChild(distanceValue);
+        distanceContainer.appendChild(distanceLabel);
+        topSection.appendChild(distanceContainer);
+        
+        preview.appendChild(topSection);
         
         // 创建2行2列数据显示区域
         const dataGrid = document.createElement('div');
         dataGrid.style.display = 'grid';
         dataGrid.style.gridTemplateColumns = '1fr 1fr';
         dataGrid.style.gridTemplateRows = '1fr 1fr';
-        dataGrid.style.gap = '15px';
-        dataGrid.style.margin = '20px 0';
+        dataGrid.style.gap = '20px';
+        dataGrid.style.margin = '0';
         dataGrid.style.fontFamily = 'Arial, sans-serif';
+        dataGrid.style.flex = '1';
         
         // 添加移动时间
         dataGrid.appendChild(createDataItem('总时长', data.movingTime || '0:00:00', ''));
@@ -463,11 +663,12 @@
         container.style.textAlign = 'center';
         
         const valueElement = document.createElement('div');
-        valueElement.style.fontSize = '36px';
+        valueElement.style.fontSize = '42px';
         valueElement.style.fontWeight = 'bold';
         valueElement.style.display = 'flex';
         valueElement.style.alignItems = 'center';
         valueElement.style.justifyContent = 'center';
+        valueElement.style.height = '60px'; // 固定高度
         
         const valueNumber = document.createElement('span');
         valueNumber.textContent = value;
@@ -475,14 +676,14 @@
         
         if (unit) {
             const unitSpan = document.createElement('span');
-            unitSpan.style.fontSize = '16px';
-            unitSpan.style.marginLeft = '2px';
+            unitSpan.style.fontSize = '18px';
+            unitSpan.style.marginLeft = '3px';
             unitSpan.textContent = unit;
             valueElement.appendChild(unitSpan);
         }
         
         const labelElement = document.createElement('div');
-        labelElement.style.fontSize = '14px';
+        labelElement.style.fontSize = '16px';
         labelElement.style.marginTop = '5px';
         labelElement.textContent = label;
         
@@ -504,7 +705,7 @@
     }
 
     // 导出图片
-    function exportImage(element) {
+    function exportImage(element, callback) {
         html2canvas(element, {
             backgroundColor: element.style.backgroundColor,
             allowTaint: true,
@@ -515,6 +716,10 @@
             link.download = 'strava-activity.png';
             link.href = canvas.toDataURL('image/png');
             link.click();
+            
+            if (callback) {
+                callback();
+            }
         });
     }
 })();
