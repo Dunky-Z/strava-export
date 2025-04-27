@@ -50,7 +50,7 @@
         .strava-export-preview {
             position: relative;
             width: 100%;
-            height: 500px;
+            aspect-ratio: 3/4;
             background-color: #000000;
             margin-bottom: 20px;
             border-radius: 8px;
@@ -65,13 +65,20 @@
             justify-content: space-between;
             margin-bottom: 20px;
             width: 100%;
+            box-sizing: border-box;
         }
         
         .color-picker-item {
             display: flex;
             flex-direction: column;
             align-items: center;
-            margin: 0 10px;
+            flex: 1;
+            margin: 0 5px;
+        }
+        
+        .color-picker-item input {
+            width: 100%;
+            max-width: 100px;
         }
         
         .export-actions {
@@ -113,7 +120,7 @@
         colorPickerContainer.className = 'color-picker-container';
         
         // 背景颜色选择
-        const bgColorPicker = createColorPicker('背景颜色', '#1a1a1a', function(color) {
+        const bgColorPicker = createColorPicker('背景颜色', '#000000', function(color) {
             preview.style.backgroundColor = color;
             updatePreview();
         });
@@ -328,7 +335,7 @@
         const title = document.createElement('h1');
         title.style.fontSize = '32px';
         title.style.fontWeight = 'bold';
-        title.style.margin = '20px';
+        title.style.margin = '0';
         title.style.fontFamily = 'Arial, sans-serif';
         title.textContent = data.title || 'Strava活动';
         preview.appendChild(title);
@@ -336,15 +343,52 @@
         // 添加活动日期
         const date = document.createElement('div');
         date.style.fontSize = '16px';
-        date.style.margin = '0 20px 20px 20px';
+        date.style.margin = '5px 0 20px 0';
         date.style.fontFamily = 'Arial, sans-serif';
         date.textContent = data.date || '';
         preview.appendChild(date);
         
-        // 添加路线图
+        // 创建路线图和距离显示的容器（并排布局）
+        const mainContainer = document.createElement('div');
+        mainContainer.style.display = 'flex';
+        mainContainer.style.justifyContent = 'space-between';
+        mainContainer.style.alignItems = 'center';
+        mainContainer.style.margin = '10px 0 20px 0';
+        
+        // 添加距离（放在左侧）
+        const distanceContainer = document.createElement('div');
+        distanceContainer.style.textAlign = 'left';
+        distanceContainer.style.flex = '1';
+        
+        const distanceValue = document.createElement('div');
+        distanceValue.style.fontSize = '48px';
+        distanceValue.style.fontWeight = 'bold';
+        distanceValue.style.display = 'flex';
+        distanceValue.style.alignItems = 'center';
+        
+        const distanceNumber = document.createElement('span');
+        distanceNumber.textContent = data.distance || '0';
+        distanceValue.appendChild(distanceNumber);
+        
+        const distanceUnit = document.createElement('span');
+        distanceUnit.style.fontSize = '24px';
+        distanceUnit.style.marginLeft = '5px';
+        distanceUnit.textContent = data.distanceUnit || 'km';
+        distanceValue.appendChild(distanceUnit);
+        
+        const distanceLabel = document.createElement('div');
+        distanceLabel.style.fontSize = '16px';
+        distanceLabel.style.marginTop = '5px';
+        distanceLabel.textContent = '距离';
+        
+        distanceContainer.appendChild(distanceValue);
+        distanceContainer.appendChild(distanceLabel);
+        mainContainer.appendChild(distanceContainer);
+        
+        // 添加路线图（放在右侧）
         if (data.routePath) {
             const routeContainer = document.createElement('div');
-            routeContainer.style.margin = '10px 0 20px 0';
+            routeContainer.style.flex = '1';
             routeContainer.style.height = '150px';
             routeContainer.style.position = 'relative';
             
@@ -374,39 +418,10 @@
             }, 0);
             
             routeContainer.appendChild(svgElement);
-            preview.appendChild(routeContainer);
+            mainContainer.appendChild(routeContainer);
         }
         
-        // 添加距离（单独一行，字号更大）
-        const distanceContainer = document.createElement('div');
-        distanceContainer.style.textAlign = 'center';
-        distanceContainer.style.margin = '10px 0';
-        
-        const distanceValue = document.createElement('div');
-        distanceValue.style.fontSize = '48px';
-        distanceValue.style.fontWeight = 'bold';
-        distanceValue.style.display = 'flex';
-        distanceValue.style.alignItems = 'center';
-        distanceValue.style.justifyContent = 'center';
-        
-        const distanceNumber = document.createElement('span');
-        distanceNumber.textContent = data.distance || '0';
-        distanceValue.appendChild(distanceNumber);
-        
-        const distanceUnit = document.createElement('span');
-        distanceUnit.style.fontSize = '24px';
-        distanceUnit.style.marginLeft = '5px';
-        distanceUnit.textContent = data.distanceUnit || 'km';
-        distanceValue.appendChild(distanceUnit);
-        
-        const distanceLabel = document.createElement('div');
-        distanceLabel.style.fontSize = '16px';
-        distanceLabel.style.marginTop = '5px';
-        distanceLabel.textContent = '距离';
-        
-        distanceContainer.appendChild(distanceValue);
-        distanceContainer.appendChild(distanceLabel);
-        preview.appendChild(distanceContainer);
+        preview.appendChild(mainContainer);
         
         // 创建2行2列数据显示区域
         const dataGrid = document.createElement('div');
