@@ -250,14 +250,39 @@
             originalPreview.style.width = '600px'; // 固定宽度
             originalPreview.style.height = '800px'; // 3:4 比例
             document.body.appendChild(originalPreview);
-
+            
             // 复制预览内容到导出用的元素
             const activityData = extractActivityData();
             generatePreview(originalPreview, activityData);
-
-            exportImage(originalPreview, function() {
-                document.body.removeChild(originalPreview);
-            });
+            
+            // 延迟500毫秒确保SVG渲染完成
+            setTimeout(() => {
+                // 确保SVG路径已经计算了viewBox
+                const pathElement = originalPreview.querySelector('svg path');
+                if (pathElement) {
+                    const svgElement = pathElement.parentElement;
+                    if (!svgElement.getAttribute('viewBox')) {
+                        // 如果viewBox尚未设置，手动计算并设置
+                        try {
+                            const bbox = pathElement.getBBox();
+                            const padding = 20;
+                            const viewBox = [
+                                bbox.x - padding,
+                                bbox.y - padding,
+                                bbox.width + padding * 2,
+                                bbox.height + padding * 2
+                            ].join(' ');
+                            svgElement.setAttribute('viewBox', viewBox);
+                        } catch (e) {
+                            console.error('计算SVG viewBox失败:', e);
+                        }
+                    }
+                }
+                
+                exportImage(originalPreview, function() {
+                    document.body.removeChild(originalPreview);
+                });
+            }, 500);
         });
 
         actions.appendChild(cancelButton);
