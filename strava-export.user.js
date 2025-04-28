@@ -613,10 +613,11 @@
         distanceContainer.style.display = 'flex';
         distanceContainer.style.flexDirection = 'column';
         distanceContainer.style.alignItems = 'flex-start';
+        distanceContainer.style.marginTop = '130px';
         distanceContainer.style.flex = '1';
 
         const distanceValue = document.createElement('div');
-        distanceValue.style.fontSize = '60px';
+        distanceValue.style.fontSize = '70px';
         distanceValue.style.fontWeight = 'bold';
         distanceValue.style.display = 'flex';
         distanceValue.style.alignItems = 'center';
