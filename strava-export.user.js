@@ -413,78 +413,81 @@
                 // 只保留数字部分
                 let distance = distanceElement.textContent.trim();
                 if (distance) {
-                    // 提取数字部分
-                    const match = distance.match(/^([\d.]+)/);
+                    // 提取数字部分，支持千位分隔符
+                    const match = distance.match(/^([\d,]+\.?\d*)/);
                     if (match) {
-                        data.distance = match[1];
+                        // 移除逗号
+                        data.distance = match[1].replace(/,/g, '');
                     } else {
                         data.distance = distance;
                     }
                 }
-
+                
                 const unitElement = distanceElement.querySelector('abbr.unit');
                 if (unitElement) {
                     data.distanceUnit = unitElement.textContent.trim();
                 }
             }
-
+            
             // 移动时间
             const movingTimeElement = inlineStats.querySelector('li:nth-child(2) strong');
             if (movingTimeElement) {
                 data.movingTime = movingTimeElement.textContent.trim();
             }
-
+            
             // 海拔爬升
             const elevationElement = inlineStats.querySelector('li:nth-child(3) strong');
             if (elevationElement) {
-                // 只保留数字部分
+                // 只保留数字部分，处理千位分隔符
                 let elevation = elevationElement.textContent.trim();
                 if (elevation) {
-                    // 提取数字部分
-                    const match = elevation.match(/^([\d.]+)/);
+                    // 提取数字部分，支持千位分隔符
+                    const match = elevation.match(/^([\d,]+\.?\d*)/);
                     if (match) {
-                        data.elevation = match[1];
+                        // 移除逗号
+                        data.elevation = match[1].replace(/,/g, '');
                     } else {
                         data.elevation = elevation;
                     }
                 }
-
+                
                 const unitElement = elevationElement.querySelector('abbr.unit');
                 if (unitElement) {
                     data.elevationUnit = unitElement.textContent.trim();
                 }
             }
         }
-
+        
         // 从secondary-stats获取平均功率
         const secondaryStats = document.querySelector('.inline-stats.section.secondary-stats');
         if (secondaryStats) {
             const powerElement = secondaryStats.querySelector('li:first-child strong');
             if (powerElement) {
-                // 只保留数字部分
+                // 只保留数字部分，处理千位分隔符
                 let power = powerElement.textContent.trim();
                 if (power) {
-                    // 提取数字部分
-                    const match = power.match(/^([\d.]+)/);
+                    // 提取数字部分，支持千位分隔符
+                    const match = power.match(/^([\d,]+\.?\d*)/);
                     if (match) {
-                        data.power = match[1];
+                        // 移除逗号
+                        data.power = match[1].replace(/,/g, '');
                     } else {
                         data.power = power;
                     }
                 }
-
+                
                 const unitElement = powerElement.querySelector('abbr.unit');
                 if (unitElement) {
                     data.powerUnit = unitElement.textContent.trim();
                 }
             }
         }
-
+        
         // 从more-stats获取平均速度（修复获取问题）
         try {
             // 尝试多种方法获取平均速度
             let avgSpeed = '';
-
+            
             // 方法1：查找更多统计中的表格
             const moreStats = document.querySelector('.section.more-stats');
             if (moreStats) {
@@ -496,7 +499,7 @@
                     }
                 }
             }
-
+            
             // 方法2：查找页面中显示的平均速度
             if (!avgSpeed) {
                 const speedLabels = Array.from(document.querySelectorAll('th'));
@@ -505,7 +508,7 @@
                     avgSpeed = speedLabel.nextElementSibling.textContent.trim();
                 }
             }
-
+            
             // 方法3：查找页面中任何带有速度单位的元素
             if (!avgSpeed) {
                 const speedElements = document.querySelectorAll('[title="千米/小时"]');
@@ -514,16 +517,17 @@
                     if (el) avgSpeed = el.textContent.trim();
                 }
             }
-
+            
             if (avgSpeed) {
-                // 提取数字部分
-                const match = avgSpeed.match(/^([\d.]+)/);
+                // 提取数字部分，支持千位分隔符
+                const match = avgSpeed.match(/^([\d,]+\.?\d*)/);
                 if (match) {
-                    data.avgSpeed = match[1];
+                    // 移除逗号
+                    data.avgSpeed = match[1].replace(/,/g, '');
                 } else {
                     data.avgSpeed = '0';
                 }
-
+                
                 data.avgSpeedUnit = 'km/h';
             } else {
                 console.log('无法获取平均速度');
